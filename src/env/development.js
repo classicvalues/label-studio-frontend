@@ -53,6 +53,7 @@ import { TaxonomyLargeInline } from '../examples/taxonomy_large_inline';
  * RichText (HTML or plain text)
  */
 import { RichTextHtml } from '../examples/rich_text_html';
+import { RichTextTable } from '../examples/rich_text_table';
 import { RichTextPlain } from '../examples/rich_text_plain';
 import { RichTextPlainRemote } from '../examples/rich_text_plain_remote';
 
@@ -76,7 +77,9 @@ import { ClassificationMixed } from '../examples/classification_mixed';
  */
 // import { AllTypes } from "../examples/all_types";
 
-const data = Buckets;
+// CHANGEME: Edit the example you want below:
+//const data = RichTextHtml;
+const data = RichTextTable;
 
 function getData(task) {
   if (task && task.data) {
@@ -143,7 +146,6 @@ function rootElement(element) {
  * @param {object} params
  */
 function configureApplication(params) {
-
   const options = {
     settings: params.settings || {},
     alert: m => console.log(m), // Noop for demo: window.alert(m)

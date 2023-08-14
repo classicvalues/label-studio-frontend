@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import ReactDOMServer from 'react-dom/server';
 import { htmlEscape, matchesSelector, moveStylesBetweenHeadTags } from '../../../utils/html';
 import ObjectTag from '../../../components/Tags/Object';
 import * as xpath from 'xpath-range';
@@ -159,11 +160,11 @@ class RichTextPieceView extends Component {
   _moveStyles = moveStylesBetweenHeadTags;
 
   _moveElementsToWorkingNode = () => {
-    const { item } = this.props;
+    const { item, alwaysInline } = this.props;
     const rootEl = item.visibleNodeRef.current;
     const workingEl = item.workingNodeRef.current;
 
-    if (item.inline) {
+    if (alwaysInline || item.inline) {
       this._moveElements(rootEl, workingEl, true);
     } else {
       const rootHtml = rootEl.contentDocument.documentElement;
@@ -180,11 +181,11 @@ class RichTextPieceView extends Component {
   };
 
   _returnElementsFromWorkingNode = () => {
-    const { item } = this.props;
+    const { item, alwaysInline } = this.props;
     const rootEl = item.visibleNodeRef.current;
     const workingEl = item.workingNodeRef.current;
 
-    if (item.inline) {
+    if (alwaysInline || item.inline) {
       this._moveElements(workingEl, rootEl);
     } else {
       const rootHtml = rootEl.contentDocument.documentElement;
@@ -205,11 +206,11 @@ class RichTextPieceView extends Component {
    * Handle initial rendering and all subsequent updates
    */
   _handleUpdate(initial = false) {
-    const { item } = this.props;
+    const { item, alwaysInline } = this.props;
     const rootEl = item.visibleNodeRef.current;
     const root = rootEl?.contentDocument?.body ?? rootEl;
 
-    if (!item.inline) {
+    if (!(alwaysInline || item.inline)) {
       if (!root || root.tagName === 'IFRAME' || !root.childNodes.length || item.isLoaded === false) return;
     }
 
@@ -246,7 +247,7 @@ class RichTextPieceView extends Component {
   }
 
   componentDidMount() {
-    const { item } = this.props;
+    const { item, alwaysInline } = this.props;
 
     if (!isFF(FF_LSDV_4620_3)) {
       item.setNeedsUpdateCallbacks(
@@ -255,7 +256,7 @@ class RichTextPieceView extends Component {
       );
     }
 
-    if (!item.inline) {
+    if (!(alwaysInline || item.inline)) {
       this.dispose = observe(item, '_isReady', this.updateLoadingVisibility, true);
     }
   }
@@ -351,7 +352,7 @@ class RichTextPieceView extends Component {
   };
 
   render() {
-    const { item } = this.props;
+    const { item, valueToComponent, alwaysInline } = this.props;
 
     if (!item._value) return null;
 
@@ -369,7 +370,19 @@ class RichTextPieceView extends Component {
         .join(newLineReplacement);
     }
 
-    if (item.inline) {
+    // Map value to component if valueToComponent is provided
+    if (valueToComponent) {
+      const renderedComp = valueToComponent(val);
+
+      // Render this to string since this is injected as html below
+      //
+      // Safety note: valueToComponent function returns a JSX component,
+      // which already escaped the possible values injected, so we don't
+      // have concern here about XSS.
+      val = ReactDOMServer.renderToString(renderedComp);
+    }
+
+    if (alwaysInline || item.inline) {
       const eventHandlers = {
         onClickCapture: this._onRegionClick,
         onMouseUp: this._onMouseUp,
@@ -470,8 +483,10 @@ const storeInjector = inject('store');
 
 const RPTV = storeInjector(observer(RichTextPieceView));
 
-export const HtxRichText = ({ isText = false } = {}) => {
+export const HtxRichText = (
+  { isText = false, valueToComponent = null, alwaysInline = false } = {},
+) => {
   return storeInjector(observer(props => {
-    return <RPTV {...props} isText={isText} />;
+    return <RPTV {...props} isText={isText} valueToComponent={valueToComponent} alwaysInline={alwaysInline}/>;
   }));
 };
