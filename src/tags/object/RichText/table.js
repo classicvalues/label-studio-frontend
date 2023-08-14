@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { inject, observer } from 'mobx-react';
 import { types } from 'mobx-state-tree';
 import { cn } from '../../../utils/bem';
 

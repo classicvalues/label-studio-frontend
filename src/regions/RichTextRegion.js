@@ -8,6 +8,7 @@ import RegionsMixin from '../mixins/Regions';
 import { RichTextModel } from '../tags/object/RichText/model';
 import { findRangeNative, rangeToGlobalOffset } from '../utils/selection-tools';
 import { isDefined } from '../utils/utilities';
+import { TableTextModel } from '../tags/object/RichText/table';
 
 const GlobalOffsets = types.model('GlobalOffset', {
   start: types.number,
@@ -26,7 +27,10 @@ const GlobalOffsets = types.model('GlobalOffset', {
 const Model = types
   .model('RichTextRegionModel', {
     type: 'richtextregion',
-    object: types.late(() => types.reference(RichTextModel)),
+    // Mobx use this info to infer the type of the Region.
+    // KA NOTE: this is the view_model that created the region.
+    //   add reference here if you add additional view_models that uses this
+    object: types.late(() => types.reference(types.union(TableTextModel, RichTextModel))),
 
     startOffset: types.integer,
     endOffset: types.integer,
@@ -282,5 +286,8 @@ const RichTextRegionModel = types.compose(
 Registry.addRegionType(RichTextRegionModel, 'text');
 Registry.addRegionType(RichTextRegionModel, 'hypertext');
 Registry.addRegionType(RichTextRegionModel, 'richtext');
+// KA NOTE: this is used by the Registry to associate region to the config tag
+//   add more if you are using this region in different config text.
+Registry.addRegionType(RichTextRegionModel, 'tabletext');
 
 export { RichTextRegionModel };
